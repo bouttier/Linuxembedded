@@ -1,19 +1,12 @@
 /*
-#include <unistd.h>
-
-#include <stdio.h>
-#include <sys/fcntl.h>
-
-
-#include "tslib.h"
-#include <pthread.h>
-#include <stdio.h>
-#include <stdlib.h>
-*/
+ *
+ * 
+ */
 
 #include <assert.h> 
 #include <unistd.h>
 #include <fcntl.h>
+#include <ft2build.h>
 #include <linux/fb.h>
 #include <string.h>
 #include <sys/dir.h>
@@ -21,23 +14,29 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <stdio.h>
+#include <tslib.h>
 #include <netinet/in.h>
 #include <net/if.h>
 #include <arpa/inet.h>
 
-#include <ft2build.h>
 #include FT_FREETYPE_H
 
 
 #ifdef NDEBUG
-	#define check_return(expr) expr
+  #define check_return(expr) expr
 #else
-	#define check_return(expr) assert(!(expr))
+  #define check_return(expr) assert(!(expr))
 #endif
 
 
+#define FACE_FOLDER "/sdcard/"
+
+#define BUTTON_SIZE   40
+#define BUTTON_MARGIN 5
+
 // Framebuffer
-// TODO : check rotation
+// TODO : check the rotation for the real mini2440 screen.
 int    fb_handle;
 short* fb_map;
 int    fb_width;
@@ -46,7 +45,10 @@ int    fb_height;
 // Freetype
 FT_Library library;
 FT_Face    face;
-int        ip_font_size = 0;
+int        font_size = 0;
+
+// Touchscreen
+struct tsdev* tsdev;
 
 void draw_red_background()
 {
@@ -70,12 +72,12 @@ void draw_text(int offset_x, int offset_y, char* text)
 		                     FT_LOAD_RENDER));
 		FT_Bitmap bitmap = face->glyph->bitmap;
 		
-		//int startx = offset_x + face->glyph->bitmap_left;
+		short* offset = fb_map
+			          + (offset_y - face->glyph->bitmap_top) * fb_width
+			          + offset_x + face->glyph->bitmap_left;
 		int x, y;
 		for (y = 0; y < bitmap.rows; y++) {
-			short* pixel = fb_map
-			               + (offset_y + y - face->glyph->bitmap_top) * fb_width
-			               + offset_x + face->glyph->bitmap_left;
+			short* pixel = offset + y * fb_width;
 			
 			for (x = 0; x < bitmap.width; x++) {
 				char c = ~bitmap.buffer[y * bitmap.pitch + x] & 0xF8;
@@ -87,7 +89,6 @@ void draw_text(int offset_x, int offset_y, char* text)
 		text++;
 	}
 }
-
 
 int get_text_width(char* text)
 {
@@ -102,16 +103,12 @@ int get_text_width(char* text)
 	return w >> 6; // Conversion to pixels.
 }
 
-void draw_ip(char* ip)
+void draw_text_centered(char* text)
 {
-	FT_Set_Pixel_Sizes(face, 0, ip_font_size);
-	
-	draw_text((fb_width - get_text_width(ip)) / 2,
-	          (fb_height + ip_font_size) / 2,
-	          ip);
+	draw_text((fb_width - get_text_width(text)) / 2,
+	          (fb_height + font_size) / 2,
+	          text);
 }
-
-#define FACE_FOLDER "/sdcard/"
 
 void load_face()
 {	
@@ -121,8 +118,8 @@ void load_face()
 	assert(dir != NULL);
 	
 	while ((file = readdir(dir)) != NULL) {
-		if(sscanf(file->d_name, "concours-%i.ttf", &ip_font_size)) {
-			assert(0 < ip_font_size && ip_font_size <= 999);
+		if(sscanf(file->d_name, "concours-%i.ttf", &font_size)) {
+			assert(0 < font_size && font_size <= 999);
 			break;
 		}
 	}
@@ -134,6 +131,8 @@ void load_face()
 	                    path,
 	                    0,
 	                    &face));
+	
+	FT_Set_Pixel_Sizes(face, 0, font_size);
 }
 
 void draw_pixel(int x, int y, int r, int g, int b)
@@ -148,16 +147,22 @@ void draw_pixel(int x, int y, int r, int g, int b)
 }
 
 
-#define BUTTON_SIZE 40
-void draw_button_up()
+void draw_button(int state)
 {
-	int i;
+	int x, y;
 	
-	for(i = 1; i <= BUTTON_SIZE; i++) {
-		draw_pixel(fb_width - i, fb_height - 5, 0, 0, 0);
-		draw_pixel(fb_width - i, fb_height - BUTTON_SIZE, 0, 0, 0);
-		draw_pixel(fb_width - 5, fb_height - i, 0, 0, 0);
-		draw_pixel(fb_width - BUTTON_SIZE, fb_height - i, 0, 0, 0);
+	short* pixel = fb_map - BUTTON_MARGIN - 1 + (fb_height - BUTTON_MARGIN) * fb_width;
+	for(y = 0; y < BUTTON_SIZE; y++) {
+		for(x = 0; x < BUTTON_SIZE; x++) {
+			pixel[-x] = 3 << (14) | 3 << 9 | 3 << 3;
+		}
+		pixel -= fb_width;
+	}
+	pixel += BUTTON_SIZE / 4 * (fb_width * (33 - 2 * state) - 1 - 2 * state);
+	for(x = 0; x < BUTTON_SIZE / 2; x++) {
+		pixel[state * x] = 0;
+		pixel[state * x * (fb_width + 1)] = 0;
+		pixel[state * x * fb_width] = 0;
 	}
 }
 
@@ -196,46 +201,54 @@ char* get_ip()
 	return inet_ntoa(((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr);
 }
 
-void draw_team()
+void wait_for_button()
 {
-	FT_Set_Pixel_Sizes(face, ip_font_size, 0); // TODO: FT_Set_Pixel_Sizes instead
-	draw_text(10, 20, "Caer & Poupine");
+	struct ts_sample sample;
+	int up = 1;
+	
+	while(1) {
+		int ret = ts_read(tsdev, &sample, 1);
+		assert(ret >= 0);
+		
+		if(ret == 0) { // No new event.
+			usleep(5000);
+		}
+		else if(sample.x > fb_width - BUTTON_SIZE
+				&& sample.y > fb_height - BUTTON_SIZE) {
+			if(sample.pressure)
+				up = 0;
+			else if(!up)
+				return;
+		}
+		else
+			up = 0; 
+	}
 }
 
-#include "../GUI-OLD/include/tslib.h"
 int main(int argc, char **argv)
 {
 	open_fb();
 	
-	draw_red_background();
-	
 	load_face();
 	
-	draw_ip(get_ip());
 	
-	draw_button_up();
-	
-	draw_team();
-	
-	///////////
-	
-	int fd = open("/dev/touchscreen", O_RD);
-	
-	
-	/*/////////
-	struct tsdev* tsdev= ts_open( "/dev/touchscreen", 0);
-	struct ts_sample samp;
+	tsdev = ts_open("/dev/touchscreen", 0);
 	assert(tsdev);
-	//check_return(ts_config(tsdev));	
+	check_return(ts_config(tsdev));
 	
 	while(1) {
-		int ret = ts_read(tsdev, &samp, 1);
-		assert(ret >= 0);
-		printf("x=%i, y=%i\n", samp.x, samp.y);
-		if(ret == 0)
-			usleep(5000);
+		draw_red_background();
+		draw_text_centered(get_ip());
+		draw_button(0);
+		
+		wait_for_button();
+		
+		draw_red_background();
+		draw_text_centered("Caer & Poupine");
+		draw_button(1);
+		
+		wait_for_button();
 	}
-	// */
 	
 	return 0;
 }
