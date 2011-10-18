@@ -24,7 +24,7 @@ void FT_setColor(GUI* gui, int R, int G, int B) {
 
 int FT_setFont(GUI* gui, char* font) {
 	
-	gui->ft_font = font;
+	//~ gui->ft_font = font;
 	int error = FT_New_Face(gui->ft_library, font, 0, &gui->ft_face);
 	if (error == FT_Err_Unknown_File_Format) {
 		printf("Error : Unsupported font format (%s)\n", font);
