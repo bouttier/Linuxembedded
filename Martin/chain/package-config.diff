@@ -1,0 +1,10 @@
+--- Config.in.bak	2011-10-19 17:24:14.476485511 +0200
++++ Config.in	2011-10-19 17:24:50.246485501 +0200
+@@ -2,6 +2,7 @@
+ 
+ source "package/busybox/Config.in"
+ source "package/customize/Config.in"
++source "package/minigui/Config.in"
+ 
+ # Audio and video applications
+ source "package/multimedia/Config.in"
