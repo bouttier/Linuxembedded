@@ -1,5 +1,5 @@
 /*
- * interface.h - Display the IP address on the framebuffer.
+ * minigui.h - Display the IP address on the framebuffer.
  *
  * Copyright (C) 2011 Martin d'Allens and Jérémy Rivière.
  *
@@ -8,8 +8,8 @@
  */
 
 
-#ifndef INTERFACE_H
-#define INTERFACE_H
+#ifndef MINIGUI_H
+#define MINIGUI_H
 
 
 // Dirty checks of return value.
@@ -50,4 +50,4 @@ void slide_in();
 void wait_for_button();
 
 
-#endif /* INTERFACE_H */
+#endif /* MINIGUI_H */

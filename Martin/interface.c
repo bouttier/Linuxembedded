@@ -1,5 +1,5 @@
 /*
- * interface.c - Display the IP address on the framebuffer.
+ * minigui.c - Display the IP address on the framebuffer.
  * 
  * Copyright (C) 2011 Martin d'Allens and Jérémy Rivière.
  *
@@ -27,7 +27,7 @@
 
 #include FT_FREETYPE_H
 
-#include "interface.h"
+#include "minigui.h"
 
 // Framebuffer
 int    fb_handle;
