@@ -35,6 +35,8 @@ char* get_ip();
 
 void open_fb();
 void open_face();
+void open_tslib();
+
 int  get_text_width(char* text);
 
 void draw_pixel(int x, int y, int r, int g, int b); // Unused.
