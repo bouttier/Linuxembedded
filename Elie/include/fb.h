@@ -7,8 +7,8 @@
 #include <sys/mman.h> // Pour mmap (mapping du buffer sur le device)
 #include <sys/ioctl.h> // Pour open()
 #include <unistd.h> // Pour open/close le device
+#include <sys/fcntl.h> // Pour les fichiers
 #include <stdio.h>
-#include <sys/fcntl.h>
 
 
 int FB_open(GUI* gui, char* device);

@@ -1,7 +1,7 @@
 #ifndef _FT_H
 #define _FT_H
 
-#include "gui.h"
+#include "gui.h" // pour les structures (GUi, …)
 
 #include <stdio.h>
 
