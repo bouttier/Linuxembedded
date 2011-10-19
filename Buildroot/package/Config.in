@@ -1,10 +1,15 @@
 menu "Package Selection for the target"
 
+
 source "package/busybox/Config.in"
 source "package/customize/Config.in"
 
 # Audio and video applications
 source "package/multimedia/Config.in"
+
+menu "Custom packages"
+source "package/ipshow/Config.in"
+endmenu
 
 menu "Compressors and decompressors"
 source "package/bzip2/Config.in"
@@ -531,8 +536,5 @@ source "package/vim/Config.in"
 endif
 endmenu
 
-menu "Custom packages"
-source "package/ipshow/Config.in"
-endmenu
 
 endmenu
