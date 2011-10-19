@@ -1,6 +1,6 @@
 CC=/home/martin/Projects/Linuxembedded/arm-arm1176jzfs-linux-gnueabi/bin/arm-arm1176jzfs-linux-gnueabi-gcc
 CFLAGS=-Wall -I include
-LDFLAGS=-L lib -l freetype
+LDFLAGS=-L lib -l freetype -l ts
 
 all: interface
 
