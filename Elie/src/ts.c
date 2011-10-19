@@ -4,11 +4,12 @@ void TS_init(GUI* gui) {
 	
 	// Obtention du device depuis la variable d'environnement TSLIB_TSDEVICE
 	// (par defaut : /dev/touchscreen)
-	if(getenv("TSLIB_TSDEVICE") == NULL) {
-		gui->ts_device = "/dev/touchscreen";
-	} else {
+	if(getenv("TSLIB_TSDEVICE")) {
 		gui->ts_device = getenv("TSLIB_TSDEVICE");
+	} else {
+		gui->ts_device = "/dev/touchscreen";
 	}
+	printf("Touchscreen device : %s\n", gui->ts_device);
 	// Ouverture du TS avec la fonction de la tslib
 	gui->ts_dev = ts_open(gui->ts_device, 0);
 	if (!gui->ts_dev) {
