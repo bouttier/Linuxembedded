@@ -53,10 +53,7 @@ int main(int argc, char **argv)
 {
 	open_fb();
 	open_face();
-	
-	tsdev = ts_open("/dev/touchscreen", 0);
-	assert(tsdev);
-	check_return(ts_config(tsdev));
+	open_tslib();
 	
 	while(1) {
 		draw_red_background();
@@ -145,6 +142,19 @@ void open_face()
 	                    &face));
 	
 	FT_Set_Pixel_Sizes(face, 0, font_size);
+}
+
+
+/*
+ * Initialize the tslib.
+ */
+void open_tslib()
+{
+	setenv("TSLIB_TSDEVICE", "/dev/touchscreen", 0);
+	
+	tsdev = ts_open("/dev/touchscreen", 0);
+	assert(tsdev);
+	check_return(ts_config(tsdev));
 }
 
 
