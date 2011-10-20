@@ -6,7 +6,6 @@ Concours Linuxembedded 2011
 =========================================
 
 =============== Fichiers ================
-
 README.txt
 	Ce fichier
 buildroot-config

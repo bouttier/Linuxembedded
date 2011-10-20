@@ -7,7 +7,7 @@
 IPSHOW_VERSION:=1.0
 IPSHOW_DIR:=$(BUILD_DIR)/ipshow-$(IPSHOW_VERSION)
 IPSHOW_BINARY:=ipshow
-IPSHOW_TARGET_BINAY:=usr/bin/ipshow
+IPSHOW_TARGET_BINARY:=usr/bin/ipshow
 IPSHOW_SOURCE:=ipshow-$(IPSHOW_VERSION).tar.gz
 
 $(IPSHOW_DIR)/.source:
