@@ -1,4 +1,4 @@
-config BR2_PACKAGE_MINGUI
+config BR2_PACKAGE_MINIGUI
 	bool "minigui"
 	select BR2_PACKAGE_FREETYPE
 	select BR2_PACKAGE_TSLIB
